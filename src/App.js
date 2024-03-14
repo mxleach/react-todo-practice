@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import ToDo from './ToDo';
+import './App.css';
 
 function App() {
   const [todos, setTodos] = useState([]);
@@ -28,13 +29,34 @@ function App() {
   };
 
   const onDragEnd = (result) => {
-    if (!result.destination) return;
-    
-    const items = Array.from(todos);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    setTodos(items);
+    const { source, destination } = result;
+  
+    // Dropped outside the list
+    if (!destination) return;
+  
+    // Reordering in the same list
+    if (source.droppableId === destination.droppableId) {
+      const items = reorder(todos, source.index, destination.index);
+      setTodos(items);
+    } else {
+      // Moving between lists
+      const item = todos[source.index];
+      const newTodos = [...todos];
+      newTodos.splice(source.index, 1); // Remove from source
+      item.completed = !item.completed; // Toggle completed status
+      newTodos.splice(destination.index, 0, item); // Insert at destination
+      setTodos(newTodos);
+    }
+  };
+ 
+  
+  
+  // Reorder function
+  const reorder = (list, startIndex, endIndex) => {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    return result;
   };
 
   return (
@@ -45,6 +67,7 @@ function App() {
           <input name="todo" type="text" placeholder="Add a new task" />
           <button type="submit">Add</button>
         </form>
+ 
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="activeTodos">
             {(provided) => (
@@ -68,6 +91,7 @@ function App() {
               </div>
             )}
           </Droppable>
+      
           <Droppable droppableId="completedTodos">
             {(provided) => (
               <div ref={provided.innerRef} {...provided.droppableProps}>
@@ -90,7 +114,7 @@ function App() {
               </div>
             )}
           </Droppable>
-        </DragDropContext>
+       </DragDropContext>
       </div>
 
 </div>
